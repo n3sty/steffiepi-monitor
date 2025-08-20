@@ -6,7 +6,7 @@ import { DockerContainer } from "@/lib/types"
 import { Container, Play, Square, AlertCircle, Clock } from "lucide-react"
 
 interface DockerContainersProps {
-  data?: DockerContainer[]
+  data?: DockerContainer[] | null
   loading?: boolean
   error?: string
 }

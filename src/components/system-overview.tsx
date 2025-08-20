@@ -12,7 +12,7 @@ import {
 } from "lucide-react"
 
 interface SystemOverviewProps {
-  data?: SystemOverview
+  data?: SystemOverview | null
   loading?: boolean
   error?: string
 }

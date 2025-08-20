@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import { apiClient, debugApiClient } from '@/lib/api'
+import { useWebSocketData } from '@/lib/hooks/use-websocket-data'
 import { SystemOverviewCard } from '@/components/system-overview'
 import { CpuDetails } from '@/components/cpu-details'
 import { MemoryDetails } from '@/components/memory-details'
 import { DockerContainers } from '@/components/docker-containers'
 import { DebugPanel } from '@/components/debug-panel'
+import { WebSocketStatusBar } from '@/components/websocket-status'
 import { swrLogger } from '@/lib/logger'
 import { config } from '@/lib/config'
 import { 
@@ -22,14 +24,18 @@ type Tab = 'overview' | 'cpu' | 'memory' | 'docker'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const useWebSocket = config.clientMode === 'real'
 
-  // Debug: Log API client info on component mount
-  useEffect(() => {
-    debugApiClient()
-    swrLogger.debug('Dashboard mounted - SWR will begin polling')
-  }, [])
+  // WebSocket data (real-time)
+  const { 
+    data: wsData, 
+    status: wsStatus, 
+    isConnected: wsConnected, 
+    connect: wsConnect, 
+    error: wsError 
+  } = useWebSocketData()
 
-  // Data fetching with SWR - with additional debugging configuration
+  // Fallback SWR data (polling) - only used when WebSocket is disabled
   const swrConfig = {
     onError: (error: Error, key: string) => {
       swrLogger.error(`SWR Error for ${key}:`, error)
@@ -43,39 +49,61 @@ export default function Dashboard() {
   }
 
   const { data: systemData, error: systemError, isLoading: systemLoading, mutate: mutateSystem } = 
-    useSWR('system/overview', apiClient.getSystemOverview, { 
+    useSWR(useWebSocket ? null : 'system/overview', apiClient.getSystemOverview, { 
       refreshInterval: 5000,
       ...swrConfig 
     })
   
   const { data: cpuData, error: cpuError, isLoading: cpuLoading, mutate: mutateCpu } = 
-    useSWR('system/cpu', apiClient.getCpuMetrics, { 
+    useSWR(useWebSocket ? null : 'system/cpu', apiClient.getCpuMetrics, { 
       refreshInterval: 3000,
       ...swrConfig 
     })
   
   const { data: memoryData, error: memoryError, isLoading: memoryLoading, mutate: mutateMemory } = 
-    useSWR('system/memory', apiClient.getMemoryMetrics, { 
+    useSWR(useWebSocket ? null : 'system/memory', apiClient.getMemoryMetrics, { 
       refreshInterval: 5000,
       ...swrConfig 
     })
   
   const { data: dockerData, error: dockerError, isLoading: dockerLoading, mutate: mutateDocker } = 
-    useSWR('docker/containers', apiClient.getDockerContainers, { 
+    useSWR(useWebSocket ? null : 'docker/containers', apiClient.getDockerContainers, { 
       refreshInterval: 10000,
       ...swrConfig 
     })
 
-  const isConnected = !systemError && !cpuError && !memoryError
-  const hasErrors = systemError || cpuError || memoryError || dockerError
+  // Use WebSocket data when available, fallback to SWR data
+  const currentSystemData = useWebSocket ? wsData.system : systemData
+  const currentDockerData = useWebSocket ? wsData.docker : dockerData
+  
+  // For CPU/Memory, we only have system overview from WebSocket, so use SWR for detailed metrics
+  const currentCpuData = cpuData
+  const currentMemoryData = memoryData
+
+  const isConnected = useWebSocket ? wsConnected : (!systemError && !cpuError && !memoryError)
+  const hasErrors = useWebSocket ? !!wsError : (systemError || cpuError || memoryError || dockerError)
 
   const refreshAll = () => {
-    swrLogger.debug('Manual refresh triggered for all endpoints')
-    mutateSystem()
-    mutateCpu()
-    mutateMemory()
-    mutateDocker()
+    if (useWebSocket) {
+      wsConnect() // Reconnect WebSocket
+    } else {
+      swrLogger.debug('Manual refresh triggered for all endpoints')
+      mutateSystem()
+      mutateCpu()
+      mutateMemory()
+      mutateDocker()
+    }
   }
+
+  // Debug: Log on component mount
+  useEffect(() => {
+    debugApiClient()
+    if (useWebSocket) {
+      swrLogger.debug('Dashboard mounted - Using WebSocket for real-time data')
+    } else {
+      swrLogger.debug('Dashboard mounted - Using SWR polling for data')
+    }
+  }, [useWebSocket])
 
   const tabs = [
     { id: 'overview' as Tab, label: 'Overview', icon: Activity },
@@ -103,18 +131,31 @@ export default function Dashboard() {
                     isConnected ? 'bg-green-500' : 'bg-red-500'
                   }`} />
                   <span className="text-sm font-mono text-gray-600">
-                    {isConnected ? 'Connected' : 'Disconnected'}
+                    {useWebSocket ? (
+                      wsStatus === 'connected' ? 'Live' : 
+                      wsStatus === 'connecting' ? 'Connecting' :
+                      wsStatus === 'reconnecting' ? 'Reconnecting' :
+                      'Disconnected'
+                    ) : (
+                      isConnected ? 'Connected' : 'Disconnected'
+                    )}
                   </span>
                 </div>
-                {systemData?.hostname && (
+                {currentSystemData?.hostname && (
                   <div className="px-2 py-1 bg-gray-100 border border-gray-300 text-xs font-mono text-gray-700">
-                    {systemData.hostname}
+                    {currentSystemData.hostname}
                   </div>
                 )}
                 {config.clientMode === 'mock' && (
                   <div className="flex items-center space-x-2 px-2 py-1 bg-orange-100 border border-orange-300 rounded">
                     <TestTube className="h-3 w-3 text-orange-600" />
                     <span className="text-xs font-mono text-orange-700">Mock Data</span>
+                  </div>
+                )}
+                {useWebSocket && (
+                  <div className="flex items-center space-x-2 px-2 py-1 bg-blue-100 border border-blue-300 rounded">
+                    <Activity className="h-3 w-3 text-blue-600" />
+                    <span className="text-xs font-mono text-blue-700">Real-time</span>
                   </div>
                 )}
               </div>
@@ -124,7 +165,9 @@ export default function Dashboard() {
               {hasErrors && (
                 <div className="flex items-center space-x-2 px-2 py-1 bg-yellow-100 border border-yellow-300">
                   <AlertTriangle className="h-3 w-3 text-yellow-600" />
-                  <span className="text-xs font-mono text-yellow-700">Issues detected</span>
+                  <span className="text-xs font-mono text-yellow-700">
+                    {useWebSocket ? 'Connection issues' : 'Issues detected'}
+                  </span>
                 </div>
               )}
               <button 
@@ -132,7 +175,7 @@ export default function Dashboard() {
                 className="px-3 py-2 border border-gray-300 bg-white hover:bg-gray-50 flex items-center space-x-2 text-sm font-mono transition-colors"
               >
                 <RefreshCw className="h-3 w-3" />
-                <span>Refresh</span>
+                <span>{useWebSocket ? 'Reconnect' : 'Refresh'}</span>
               </button>
             </div>
           </div>
@@ -162,15 +205,25 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* WebSocket Status Bar */}
+      {useWebSocket && (
+        <WebSocketStatusBar
+          status={wsStatus}
+          lastUpdate={wsData.lastUpdate}
+          error={wsError}
+          onReconnect={wsConnect}
+        />
+      )}
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 ">
         <div className="bg-white border border-gray-200">
           {activeTab === 'overview' && (
             <div className="p-6">
               <SystemOverviewCard 
-                data={systemData} 
-                loading={systemLoading} 
-                error={systemError?.message}
+                data={currentSystemData} 
+                loading={useWebSocket ? false : systemLoading} 
+                error={useWebSocket ? wsError : systemError?.message}
               />
             </div>
           )}
@@ -178,7 +231,7 @@ export default function Dashboard() {
           {activeTab === 'cpu' && (
             <div className="p-6">
               <CpuDetails 
-                data={cpuData} 
+                data={currentCpuData} 
                 loading={cpuLoading} 
                 error={cpuError?.message}
               />
@@ -188,7 +241,7 @@ export default function Dashboard() {
           {activeTab === 'memory' && (
             <div className="p-6">
               <MemoryDetails 
-                data={memoryData} 
+                data={currentMemoryData} 
                 loading={memoryLoading} 
                 error={memoryError?.message}
               />
@@ -198,9 +251,9 @@ export default function Dashboard() {
           {activeTab === 'docker' && (
             <div className="p-6">
               <DockerContainers 
-                data={dockerData} 
-                loading={dockerLoading} 
-                error={dockerError?.message}
+                data={currentDockerData} 
+                loading={useWebSocket ? false : dockerLoading} 
+                error={useWebSocket ? wsError : dockerError?.message}
               />
             </div>
           )}
@@ -209,18 +262,18 @@ export default function Dashboard() {
 
       {/* Debug Panel (Development Only) */}
       <DebugPanel
-        systemData={systemData}
-        cpuData={cpuData}
-        memoryData={memoryData}
-        dockerData={dockerData}
-        systemError={systemError}
+        systemData={currentSystemData}
+        cpuData={currentCpuData}
+        memoryData={currentMemoryData}
+        dockerData={currentDockerData}
+        systemError={useWebSocket ? (wsError ? new Error(wsError) : null) : systemError}
         cpuError={cpuError}
         memoryError={memoryError}
-        dockerError={dockerError}
-        systemLoading={systemLoading}
+        dockerError={useWebSocket ? (wsError ? new Error(wsError) : null) : dockerError}
+        systemLoading={useWebSocket ? false : systemLoading}
         cpuLoading={cpuLoading}
         memoryLoading={memoryLoading}
-        dockerLoading={dockerLoading}
+        dockerLoading={useWebSocket ? false : dockerLoading}
       />
 
       {/* Footer */}

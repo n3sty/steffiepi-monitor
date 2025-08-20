@@ -12,7 +12,7 @@ export const config = {
   
   // WebSocket configuration
   websocket: {
-    url: process.env.MONITOR_WEBSOCKET_URL || 'wss://localhost:3001',
+    url: process.env.MONITOR_WEBSOCKET_URL || 'wss://localhost:3001/ws/metrics',
     reconnectInterval: 5000, // 5 seconds
     maxReconnectAttempts: 10,
   },

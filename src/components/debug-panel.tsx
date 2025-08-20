@@ -19,10 +19,10 @@ interface DebugPanelProps {
   cpuData?: unknown
   memoryData?: unknown
   dockerData?: unknown
-  systemError?: Error
+  systemError?: Error | null
   cpuError?: Error
   memoryError?: Error
-  dockerError?: Error
+  dockerError?: Error | null
   systemLoading: boolean
   cpuLoading: boolean
   memoryLoading: boolean
