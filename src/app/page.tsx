@@ -8,11 +8,14 @@ import { CpuDetails } from '@/components/cpu-details'
 import { MemoryDetails } from '@/components/memory-details'
 import { DockerContainers } from '@/components/docker-containers'
 import { DebugPanel } from '@/components/debug-panel'
+import { swrLogger } from '@/lib/logger'
+import { config } from '@/lib/config'
 import { 
   Activity, 
   RefreshCw, 
   Server, 
-  AlertTriangle
+  AlertTriangle,
+  TestTube
 } from 'lucide-react'
 
 type Tab = 'overview' | 'cpu' | 'memory' | 'docker'
@@ -23,25 +26,19 @@ export default function Dashboard() {
   // Debug: Log API client info on component mount
   useEffect(() => {
     debugApiClient()
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 Dashboard mounted - SWR will begin polling')
-    }
+    swrLogger.debug('Dashboard mounted - SWR will begin polling')
   }, [])
 
   // Data fetching with SWR - with additional debugging configuration
   const swrConfig = {
     onError: (error: Error, key: string) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.error(`💥 SWR Error for ${key}:`, error)
-      }
+      swrLogger.error(`SWR Error for ${key}:`, error)
     },
     onSuccess: (data: unknown, key: string) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ SWR Success for ${key}:`, { 
-          dataKeys: data && typeof data === 'object' ? Object.keys(data) : [], 
-          timestamp: new Date().toISOString() 
-        })
-      }
+      swrLogger.debug(`SWR Success for ${key}:`, { 
+        dataKeys: data && typeof data === 'object' ? Object.keys(data) : [], 
+        timestamp: new Date().toISOString() 
+      })
     }
   }
 
@@ -73,9 +70,7 @@ export default function Dashboard() {
   const hasErrors = systemError || cpuError || memoryError || dockerError
 
   const refreshAll = () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Manual refresh triggered for all endpoints')
-    }
+    swrLogger.debug('Manual refresh triggered for all endpoints')
     mutateSystem()
     mutateCpu()
     mutateMemory()
@@ -114,6 +109,12 @@ export default function Dashboard() {
                 {systemData?.hostname && (
                   <div className="px-2 py-1 bg-gray-100 border border-gray-300 text-xs font-mono text-gray-700">
                     {systemData.hostname}
+                  </div>
+                )}
+                {config.clientMode === 'mock' && (
+                  <div className="flex items-center space-x-2 px-2 py-1 bg-orange-100 border border-orange-300 rounded">
+                    <TestTube className="h-3 w-3 text-orange-600" />
+                    <span className="text-xs font-mono text-orange-700">Mock Data</span>
                   </div>
                 )}
               </div>

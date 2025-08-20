@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
+import { logger } from '@/lib/logger'
 import { 
   Bug,
   ChevronDown,
@@ -72,18 +73,18 @@ export function DebugPanel({
 
   const clearConsole = () => {
     console.clear()
-    console.log('🧹 Console cleared by Debug Panel')
+    logger.info('Console cleared by Debug Panel')
   }
 
   const logApiState = () => {
-    console.group('🔧 Debug Panel - API State Summary')
-    console.log('🌐 API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
-    console.log('🔑 API Key Set:', !!process.env.NEXT_PUBLIC_API_KEY)
-    console.log('📊 Data States:', dataStates)
-    console.log('❌ Active Errors:', errors.length)
-    console.log('⏳ Loading States:', loadingStates.length)
-    console.log('⏰ Timestamp:', new Date().toISOString())
-    console.groupEnd()
+    logger.info('Debug Panel - API State Summary', {
+      apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+      apiKeySet: !!process.env.NEXT_PUBLIC_API_KEY,
+      dataStates,
+      activeErrors: errors.length,
+      loadingStates: loadingStates.length,
+      timestamp: new Date().toISOString()
+    })
   }
 
   return (

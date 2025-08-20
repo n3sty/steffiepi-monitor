@@ -89,6 +89,14 @@ node test-integration.js
 | `MONITOR_API_KEY` | Pi backend API key | - | If `real` mode |
 | `MONITOR_WEBSOCKET_URL` | WebSocket URL for real-time data | `wss://localhost:3001` | If `real` mode |
 
+#### Logging Configuration
+
+| Variable | Description | Default | Options |
+|----------|-------------|---------|---------|
+| `LOG_LEVEL` | Logging level | `warn` | `error`, `warn`, `info`, `debug`, `trace` |
+| `LOG_ENABLED` | Enable/disable logging | `true` in dev | `true`, `false` |
+| `LOG_PREFIX` | Custom log prefix | `🔍` | Any string |
+
 ### Mode Switching
 
 You can switch between mock and real data by changing the `MONITOR_MODE` environment variable:
@@ -100,6 +108,31 @@ MONITOR_MODE=mock npm run dev
 # Testing with real Pi backend
 MONITOR_MODE=real npm run dev
 ```
+
+### Logging Control
+
+The application now uses a centralized logging system that can be controlled via environment variables:
+
+```bash
+# Minimal logging (only errors and warnings)
+LOG_LEVEL=warn npm run dev
+
+# Verbose logging for debugging
+LOG_LEVEL=debug npm run dev
+
+# Disable all logging
+LOG_ENABLED=false npm run dev
+
+# Custom log prefix
+LOG_PREFIX=🍓 npm run dev
+```
+
+**Log Levels:**
+- `error`: Only error messages
+- `warn`: Errors and warnings (default)
+- `info`: Errors, warnings, and info messages
+- `debug`: All messages including debug info
+- `trace`: All messages including trace info
 
 ## Backend Integration
 

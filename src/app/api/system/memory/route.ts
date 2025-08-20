@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { config } from '@/lib/config'
 import { getPiMemoryMetrics } from '@/lib/pi-client'
 import { MemoryMetrics } from '@/lib/types'
+import { apiLogger } from '@/lib/logger'
 
 // Mock memory data for development
 async function getMockMemoryMetrics(): Promise<MemoryMetrics> {
@@ -36,9 +37,7 @@ async function getRealMemoryMetrics(): Promise<MemoryMetrics> {
   try {
     return await getPiMemoryMetrics()
   } catch (error) {
-    if (config.isDevelopment) {
-      console.warn('⚠️ Pi memory metrics failed, using mock data:', error)
-    }
+    apiLogger.warn('Pi memory metrics failed, using mock data:', error)
     return getMockMemoryMetrics()
   }
 }
@@ -47,9 +46,7 @@ export async function GET() {
   const startTime = performance.now()
   
   try {
-    if (config.isDevelopment) {
-      console.log(`🔄 API Proxy [${config.mode}]: GET /api/system/memory`)
-    }
+    apiLogger.debug(`API Proxy [${config.mode}]: GET /api/system/memory`)
 
     const data = config.mode === 'real'
       ? await getRealMemoryMetrics()
@@ -57,13 +54,11 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
 
-    if (config.isDevelopment) {
-      console.log(`✅ Memory Metrics API [${config.mode}]: ${responseTime}ms`, {
-        usage: `${data.usage.toFixed(1)}%`,
-        used: `${Math.round(data.used / (1024 * 1024 * 1024))}GB`,
-        total: `${Math.round(data.total / (1024 * 1024 * 1024))}GB`
-      })
-    }
+    apiLogger.debug(`Memory Metrics API [${config.mode}]: ${responseTime}ms`, {
+      usage: `${data.usage.toFixed(1)}%`,
+      used: `${Math.round(data.used / (1024 * 1024 * 1024))}GB`,
+      total: `${Math.round(data.total / (1024 * 1024 * 1024))}GB`
+    })
 
     return NextResponse.json({
       success: true,
@@ -75,9 +70,7 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
     
-    if (config.isDevelopment) {
-      console.error(`💥 Memory Metrics API Error (${responseTime}ms):`, error)
-    }
+    apiLogger.error(`Memory Metrics API Error (${responseTime}ms):`, error)
 
     return NextResponse.json(
       {

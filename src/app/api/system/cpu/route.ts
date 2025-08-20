@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { config } from '@/lib/config'
 import { getPiCpuMetrics } from '@/lib/pi-client'
 import { CpuMetrics } from '@/lib/types'
+import { apiLogger } from '@/lib/logger'
 
 // Mock CPU data for development
 async function getMockCpuMetrics(): Promise<CpuMetrics> {
@@ -35,9 +36,7 @@ async function getRealCpuMetrics(): Promise<CpuMetrics> {
   try {
     return await getPiCpuMetrics()
   } catch (error) {
-    if (config.isDevelopment) {
-      console.warn('⚠️ Pi CPU metrics failed, using mock data:', error)
-    }
+    apiLogger.warn('Pi CPU metrics failed, using mock data:', error)
     return getMockCpuMetrics()
   }
 }
@@ -46,9 +45,7 @@ export async function GET() {
   const startTime = performance.now()
   
   try {
-    if (config.isDevelopment) {
-      console.log(`🔄 API Proxy [${config.mode}]: GET /api/system/cpu`)
-    }
+    apiLogger.debug(`API Proxy [${config.mode}]: GET /api/system/cpu`)
 
     const data = config.mode === 'real' 
       ? await getRealCpuMetrics()
@@ -56,13 +53,11 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
 
-    if (config.isDevelopment) {
-      console.log(`✅ CPU Metrics API [${config.mode}]: ${responseTime}ms`, {
-        usage: `${data.usage.toFixed(1)}%`,
-        cores: data.cores.length,
-        temperature: `${data.temperature.toFixed(1)}°C`
-      })
-    }
+    apiLogger.debug(`CPU Metrics API [${config.mode}]: ${responseTime}ms`, {
+      usage: `${data.usage.toFixed(1)}%`,
+      cores: data.cores.length,
+      temperature: `${data.temperature.toFixed(1)}°C`
+    })
 
     return NextResponse.json({
       success: true,
@@ -74,9 +69,7 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
     
-    if (config.isDevelopment) {
-      console.error(`💥 CPU Metrics API Error (${responseTime}ms):`, error)
-    }
+    apiLogger.error(`CPU Metrics API Error (${responseTime}ms):`, error)
 
     return NextResponse.json(
       {

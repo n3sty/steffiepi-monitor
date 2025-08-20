@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { config } from '@/lib/config'
 import { getPiDockerContainers } from '@/lib/pi-client'
 import { DockerContainer } from '@/lib/types'
+import { apiLogger } from '@/lib/logger'
 
 // Mock Docker containers data for development
 async function getMockDockerContainers(): Promise<DockerContainer[]> {
@@ -58,9 +59,7 @@ async function getRealDockerContainers(): Promise<DockerContainer[]> {
   try {
     return await getPiDockerContainers()
   } catch (error) {
-    if (config.isDevelopment) {
-      console.warn('⚠️ Pi Docker containers failed, using mock data:', error)
-    }
+    apiLogger.warn('Pi Docker containers failed, using mock data:', error)
     return getMockDockerContainers()
   }
 }
@@ -69,9 +68,7 @@ export async function GET() {
   const startTime = performance.now()
   
   try {
-    if (config.isDevelopment) {
-      console.log(`🔄 API Proxy [${config.mode}]: GET /api/docker/containers`)
-    }
+    apiLogger.debug(`API Proxy [${config.mode}]: GET /api/docker/containers`)
 
     const data = config.mode === 'real'
       ? await getRealDockerContainers()
@@ -79,13 +76,11 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
 
-    if (config.isDevelopment) {
-      console.log(`✅ Docker Containers API [${config.mode}]: ${responseTime}ms`, {
-        containerCount: data.length,
-        running: data.filter(c => c.state === 'running').length,
-        stopped: data.filter(c => c.state === 'exited').length
-      })
-    }
+    apiLogger.debug(`Docker Containers API [${config.mode}]: ${responseTime}ms`, {
+      containerCount: data.length,
+      running: data.filter(c => c.state === 'running').length,
+      stopped: data.filter(c => c.state === 'exited').length
+    })
 
     return NextResponse.json({
       success: true,
@@ -97,9 +92,7 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
     
-    if (config.isDevelopment) {
-      console.error(`💥 Docker Containers API Error (${responseTime}ms):`, error)
-    }
+    apiLogger.error(`Docker Containers API Error (${responseTime}ms):`, error)
 
     return NextResponse.json(
       {

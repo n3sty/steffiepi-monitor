@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { config } from '@/lib/config'
 import { getPiHealth } from '@/lib/pi-client'
 import { HealthStatus } from '@/lib/types'
+import { apiLogger } from '@/lib/logger'
 
 // Mock health data for development
 async function getMockHealth(): Promise<HealthStatus> {
@@ -24,9 +25,7 @@ async function getRealHealth(): Promise<HealthStatus> {
     return await getPiHealth()
   } catch (error) {
     // Fall back to mock data if Pi is unavailable
-    if (config.isDevelopment) {
-      console.warn('⚠️ Pi health check failed, using mock data:', error)
-    }
+    apiLogger.warn('Pi health check failed, using mock data:', error)
     return getMockHealth()
   }
 }
@@ -35,9 +34,7 @@ export async function GET() {
   const startTime = performance.now()
   
   try {
-    if (config.isDevelopment) {
-      console.log(`🔄 API Proxy [${config.mode}]: GET /api/health`)
-    }
+    apiLogger.debug(`API Proxy [${config.mode}]: GET /api/health`)
 
     // Choose data source based on configuration
     const data = config.mode === 'real' 
@@ -47,13 +44,11 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
 
-    if (config.isDevelopment) {
-      console.log(`✅ Health Check API [${config.mode}]: ${responseTime}ms`, {
-        status: data.status,
-        uptime: `${Math.round(data.uptime)}s`,
-        services: data.services
-      })
-    }
+    apiLogger.debug(`Health Check API [${config.mode}]: ${responseTime}ms`, {
+      status: data.status,
+      uptime: `${Math.round(data.uptime)}s`,
+      services: data.services
+    })
 
     return NextResponse.json({
       success: true,
@@ -65,9 +60,7 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
     
-    if (config.isDevelopment) {
-      console.error(`💥 Health Check API Error (${responseTime}ms):`, error)
-    }
+    apiLogger.error(`Health Check API Error (${responseTime}ms):`, error)
 
     return NextResponse.json(
       {

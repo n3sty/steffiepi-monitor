@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { config } from '@/lib/config'
 import { getPiSystemOverview } from '@/lib/pi-client'
 import { SystemOverview } from '@/lib/types'
+import { apiLogger } from '@/lib/logger'
 
 // Mock system data for development
 async function getMockSystemOverview(): Promise<SystemOverview> {
@@ -43,9 +44,7 @@ async function getRealSystemOverview(): Promise<SystemOverview> {
     return await getPiSystemOverview()
   } catch (error) {
     // Fall back to mock data if Pi is unavailable
-    if (config.isDevelopment) {
-      console.warn('⚠️ Pi system overview failed, using mock data:', error)
-    }
+    apiLogger.warn('Pi system overview failed, using mock data:', error)
     return getMockSystemOverview()
   }
 }
@@ -54,9 +53,7 @@ export async function GET() {
   const startTime = performance.now()
   
   try {
-    if (config.isDevelopment) {
-      console.log(`🔄 API Proxy [${config.mode}]: GET /api/system/overview`)
-    }
+    apiLogger.debug(`API Proxy [${config.mode}]: GET /api/system/overview`)
 
     // Choose data source based on configuration
     const data = config.mode === 'real'
@@ -66,14 +63,12 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
 
-    if (config.isDevelopment) {
-      console.log(`✅ System Overview API [${config.mode}]: ${responseTime}ms`, {
-        hostname: data.hostname,
-        cpu: `${data.cpu.usage.toFixed(1)}%`,
-        memory: `${data.memory.usage.toFixed(1)}%`,
-        disk: `${data.disk.usage.toFixed(1)}%`
-      })
-    }
+    apiLogger.debug(`System Overview API [${config.mode}]: ${responseTime}ms`, {
+      hostname: data.hostname,
+      cpu: `${data.cpu.usage.toFixed(1)}%`,
+      memory: `${data.memory.usage.toFixed(1)}%`,
+      disk: `${data.disk.usage.toFixed(1)}%`
+    })
 
     return NextResponse.json({
       success: true,
@@ -85,9 +80,7 @@ export async function GET() {
     const endTime = performance.now()
     const responseTime = Math.round(endTime - startTime)
     
-    if (config.isDevelopment) {
-      console.error(`💥 System Overview API Error (${responseTime}ms):`, error)
-    }
+    apiLogger.error(`System Overview API Error (${responseTime}ms):`, error)
 
     return NextResponse.json(
       {

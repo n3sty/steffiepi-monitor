@@ -1,6 +1,7 @@
 // HTTP client for communicating with node-monitor Pi backend
 import { config, validateConfig } from './config'
 import { SystemOverview, CpuMetrics, MemoryMetrics, NetworkMetrics, DockerContainer, ContainerStats, HealthStatus } from './types'
+import { piLogger } from './logger'
 
 // Ensure configuration is valid
 validateConfig()
@@ -54,7 +55,7 @@ class PiClient {
     for (let attempt = 1; attempt <= retryConfig.attempts; attempt++) {
       try {
         if (config.isDevelopment) {
-          console.log(`🌐 Pi Request [${attempt}/${retryConfig.attempts}]: ${endpoint}`)
+          piLogger.debug(`Request [${attempt}/${retryConfig.attempts}]: ${endpoint}`)
         }
 
         const controller = new AbortController()
@@ -82,9 +83,7 @@ class PiClient {
 
         const result = await response.json()
 
-        if (config.isDevelopment) {
-          console.log(`✅ Pi Response: ${endpoint}`, result)
-        }
+        piLogger.debug(`Response: ${endpoint}`)
 
         if (!result.success) {
           throw new PiClientError(
@@ -98,9 +97,7 @@ class PiClient {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
 
-        if (config.isDevelopment) {
-          console.warn(`⚠️ Pi Request failed [${attempt}/${retryConfig.attempts}]:`, lastError.message)
-        }
+        piLogger.warn(`Request failed [${attempt}/${retryConfig.attempts}]: ${lastError.message}`)
 
         // Don't retry on certain errors
         if (error instanceof PiClientError) {
@@ -175,7 +172,7 @@ class PiClient {
       return health.status === 'healthy'
     } catch (error) {
       if (config.isDevelopment) {
-        console.error('🔴 Pi connection test failed:', error)
+        piLogger.error('Connection test failed:', error)
       }
       return false
     }

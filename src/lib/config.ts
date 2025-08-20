@@ -1,4 +1,5 @@
 // Configuration management for monitor backend integration
+import { logger } from './logger'
 
 export const config = {
   // Backend API configuration
@@ -52,13 +53,11 @@ export function validateConfig() {
 
 // Debug configuration info
 export function debugConfig() {
-  if (!config.isDevelopment) return
-  
-  console.group('🔧 Monitor Configuration')
-  console.log('🎯 Mode:', config.mode)
-  console.log('🌐 API URL:', config.api.url)
-  console.log('🔑 API Key:', config.api.key ? '***' + config.api.key.slice(-4) : 'Not set')
-  console.log('🔌 WebSocket:', config.websocket.url)
-  console.log('💻 Client Mode:', config.clientMode)
-  console.groupEnd()
+  logger.info('Monitor Configuration', {
+    mode: config.mode,
+    apiUrl: config.api.url,
+    apiKey: config.api.key ? '***' + config.api.key.slice(-4) : 'Not set',
+    websocket: config.websocket.url,
+    clientMode: config.clientMode
+  })
 }

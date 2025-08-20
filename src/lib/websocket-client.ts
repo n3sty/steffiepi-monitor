@@ -1,6 +1,7 @@
 // WebSocket client for real-time monitoring data from Pi backend
 import { config } from './config'
 import { WebSocketMessage } from './types'
+import { wsLogger } from './logger'
 
 export type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'error'
 
@@ -65,9 +66,7 @@ export class WebSocketClient {
   // Send message (for future use if needed)
   send(data: unknown): boolean {
     if (!this.isConnected()) {
-      if (config.isDevelopment) {
-        console.warn('🔌 WebSocket not connected, cannot send message')
-      }
+      wsLogger.warn('WebSocket not connected, cannot send message')
       return false
     }
 
@@ -75,9 +74,7 @@ export class WebSocketClient {
       this.ws!.send(JSON.stringify(data))
       return true
     } catch (error) {
-      if (config.isDevelopment) {
-        console.error('💥 WebSocket send error:', error)
-      }
+      wsLogger.error('WebSocket send error:', error)
       return false
     }
   }
@@ -86,9 +83,7 @@ export class WebSocketClient {
     if (!this.ws) return
 
     this.ws.onopen = () => {
-      if (config.isDevelopment) {
-        console.log('🔌 WebSocket connected to:', this.options.url)
-      }
+      wsLogger.info('WebSocket connected to:', this.options.url)
       this.reconnectAttempts = 0
       this.setStatus('connected')
     }
@@ -97,24 +92,18 @@ export class WebSocketClient {
       try {
         const message: WebSocketMessage = JSON.parse(event.data)
         
-        if (config.isDevelopment) {
-          console.log('📨 WebSocket message:', message.type)
-        }
+        wsLogger.debug('WebSocket message:', message.type)
 
         if (this.options.onMessage) {
           this.options.onMessage(message)
         }
       } catch (error) {
-        if (config.isDevelopment) {
-          console.error('💥 WebSocket message parse error:', error)
-        }
+        wsLogger.error('WebSocket message parse error:', error)
       }
     }
 
     this.ws.onclose = (event) => {
-      if (config.isDevelopment) {
-        console.log('🔌 WebSocket closed:', event.code, event.reason)
-      }
+      wsLogger.info('WebSocket closed:', event.code, event.reason)
       
       this.ws = null
       
@@ -127,9 +116,7 @@ export class WebSocketClient {
     }
 
     this.ws.onerror = (error) => {
-      if (config.isDevelopment) {
-        console.error('💥 WebSocket error:', error)
-      }
+      wsLogger.error('WebSocket error:', error)
       this.setStatus('error', new Error('WebSocket connection error'))
     }
   }
@@ -139,9 +126,7 @@ export class WebSocketClient {
     
     this.status = status
     
-    if (config.isDevelopment) {
-      console.log(`🔌 WebSocket status: ${status}`)
-    }
+    wsLogger.debug(`WebSocket status: ${status}`)
 
     if (this.options.onStatusChange) {
       this.options.onStatusChange(status, error)
@@ -154,9 +139,7 @@ export class WebSocketClient {
     const maxAttempts = this.options.maxReconnectAttempts ?? config.websocket.maxReconnectAttempts
     
     if (this.reconnectAttempts >= maxAttempts) {
-      if (config.isDevelopment) {
-        console.error('🔌 WebSocket max reconnection attempts reached')
-      }
+      wsLogger.error('WebSocket max reconnection attempts reached')
       this.setStatus('error', new Error('Max reconnection attempts reached'))
       return
     }
@@ -168,9 +151,7 @@ export class WebSocketClient {
     const baseDelay = this.options.reconnectInterval ?? config.websocket.reconnectInterval
     const delay = Math.min(baseDelay * Math.pow(2, this.reconnectAttempts - 1), baseDelay * 4)
 
-    if (config.isDevelopment) {
-      console.log(`🔌 WebSocket reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${maxAttempts})`)
-    }
+    wsLogger.info(`WebSocket reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${maxAttempts})`)
 
     this.setStatus('reconnecting')
     
