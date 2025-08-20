@@ -77,7 +77,7 @@ export function SystemOverviewCard({ data, loading, error }: SystemOverviewProps
             <div className="flex justify-between">
               <span className="text-xs text-muted-foreground">Load Avg</span>
               <span className="text-xs font-mono">
-                {data.loadAverage.map(l => l.toFixed(2)).join(' ')}
+                {data.loadAverage?.map(l => l?.toFixed(2) || 'N/A').join(' ') || 'N/A'}
               </span>
             </div>
           </div>

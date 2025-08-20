@@ -185,15 +185,14 @@ class PiClient {
 // Singleton instance
 export const piClient = new PiClient()
 
-// Export client methods for easy access
-export const {
-  getSystemOverview: getPiSystemOverview,
-  getCpuMetrics: getPiCpuMetrics,
-  getMemoryMetrics: getPiMemoryMetrics,
-  getNetworkMetrics: getPiNetworkMetrics,
-  getDockerContainers: getPiDockerContainers,
-  getContainerStats: getPiContainerStats,
-  getContainerLogs: getPiContainerLogs,
-  getHealth: getPiHealth,
-  testConnection: testPiConnection,
-} = piClient
+// Export client methods for easy access with proper binding
+export const getPiSystemOverview = () => piClient.getSystemOverview()
+export const getPiCpuMetrics = () => piClient.getCpuMetrics()
+export const getPiMemoryMetrics = () => piClient.getMemoryMetrics()
+export const getPiNetworkMetrics = () => piClient.getNetworkMetrics()
+export const getPiDockerContainers = () => piClient.getDockerContainers()
+export const getPiContainerStats = (containerId: string) => piClient.getContainerStats(containerId)
+export const getPiContainerLogs = (containerId: string, options?: { lines?: number; since?: string; until?: string }) => 
+  piClient.getContainerLogs(containerId, options)
+export const getPiHealth = () => piClient.getHealth()
+export const testPiConnection = () => piClient.testConnection()

@@ -148,15 +148,15 @@ export function CpuDetails({ data, loading, error }: CpuDetailsProps) {
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold">{data.loadAverage['1min'].toFixed(2)}</div>
+              <div className="text-2xl font-bold">{data.loadAverage['1min']?.toFixed(2) || 'N/A'}</div>
               <div className="text-sm text-muted-foreground">1 minute</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{data.loadAverage['5min'].toFixed(2)}</div>
+              <div className="text-2xl font-bold">{data.loadAverage['5min']?.toFixed(2) || 'N/A'}</div>
               <div className="text-sm text-muted-foreground">5 minutes</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{data.loadAverage['15min'].toFixed(2)}</div>
+              <div className="text-2xl font-bold">{data.loadAverage['15min']?.toFixed(2) || 'N/A'}</div>
               <div className="text-sm text-muted-foreground">15 minutes</div>
             </div>
           </div>
