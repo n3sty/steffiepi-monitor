@@ -40,7 +40,27 @@ npm run dev:monitor  # Monitor API on :3001
 
 ### Deploy to Raspberry Pi
 
-1. **One-command deployment**
+#### Option 1: Docker Deployment (Recommended) 🐳
+
+```bash
+npm run deploy:pi:docker <pi-host-or-ip>
+```
+
+Example:
+```bash
+npm run deploy:pi:docker 192.168.1.100
+npm run deploy:pi:docker raspberry.local
+```
+
+This will:
+- Upload project files to your Pi via SSH
+- Install Docker and Docker Compose if needed
+- Build containers directly on the Pi
+- Start services with automatic restart policies
+- Set up resource limits optimized for Pi hardware
+
+#### Option 2: Traditional PM2 Deployment
+
 ```bash
 npm run deploy:pi <pi-host-or-ip>
 ```
@@ -52,14 +72,13 @@ npm run deploy:pi raspberry.local pi /opt/steffiepi-monitor
 ```
 
 This will:
-- Build all packages
+- Build all packages locally
 - Upload to your Pi
-- Install dependencies
-- Configure PM2 for process management
-- Start both monitor and web services
-- Set up auto-start on boot
+- Install Node.js, PM2, and dependencies
+- Configure systemd service for auto-start
+- Start services with PM2 process management
 
-2. **Access your dashboard**
+#### Access Your Dashboard
 - Web Interface: `http://your-pi-ip:3000`
 - API Health: `http://your-pi-ip:3001/api/health`
 
@@ -100,7 +119,8 @@ steffiepi-monitor/
 - `npm run build` - Build all packages
 - `npm run lint` - Lint all packages
 - `npm run clean` - Clean all build outputs
-- `npm run deploy:pi <host>` - Deploy to Raspberry Pi
+- `npm run deploy:pi:docker <host>` - Deploy with Docker (recommended)
+- `npm run deploy:pi <host>` - Deploy with PM2
 - `npm run build:all` - Create deployment archive
 
 ### Individual Apps
@@ -130,14 +150,36 @@ MONITOR_WEBSOCKET_URL=ws://localhost:3001
 
 ## 🐳 Docker Support
 
-For containerized deployment:
-
+### Local Development
 ```bash
-# Development
 docker-compose up -d
+```
 
-# Production
-docker-compose -f docker-compose.prod.yml up -d
+### Pi Deployment
+```bash
+# Automatic deployment (recommended)
+npm run deploy:pi:docker <pi-host>
+
+# Manual deployment on Pi
+scp -r . pi@your-pi-ip:/home/pi/steffiepi-monitor/
+ssh pi@your-pi-ip
+cd /home/pi/steffiepi-monitor
+docker-compose -f docker-compose.pi.yml up -d
+```
+
+### Container Management on Pi
+```bash
+# View status
+docker-compose -f docker-compose.pi.yml ps
+
+# View logs
+docker-compose -f docker-compose.pi.yml logs
+
+# Restart services
+docker-compose -f docker-compose.pi.yml restart
+
+# Stop services
+docker-compose -f docker-compose.pi.yml down
 ```
 
 ## 📊 API Endpoints

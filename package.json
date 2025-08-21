@@ -14,6 +14,7 @@
     "lint": "turbo lint",
     "clean": "turbo clean",
     "deploy:pi": "./scripts/deploy-to-pi.sh",
+    "deploy:pi:docker": "./scripts/deploy-docker-pi.sh",
     "build:all": "./scripts/build-all.sh"
   },
   "devDependencies": {
