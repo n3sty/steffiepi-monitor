@@ -6,10 +6,9 @@ import { logger } from '../utils/logger.js'
 export class SystemService {
   async getOverview(): Promise<SystemOverview> {
     try {
-      const [cpu, mem, load, osInfo] = await Promise.all([
+      const [cpu, mem, osInfo] = await Promise.all([
         si.currentLoad(),
         si.mem(),
-        si.loadavg(),
         si.osInfo()
       ])
 
@@ -19,7 +18,7 @@ export class SystemService {
       return {
         hostname: osInfo.hostname,
         uptime: osInfo.uptime,
-        loadAverage: [load.avgLoad1, load.avgLoad5, load.avgLoad15],
+        loadAverage: [cpu.avgLoad || 0, 0, 0],
         cpu: {
           usage: Math.round(cpu.currentLoad),
           cores: cpu.cpus?.length || 0,
@@ -39,34 +38,31 @@ export class SystemService {
         }
       }
     } catch (error) {
-      logger.error('Failed to get system overview:', error)
+      logger.error('Failed to get system overview:', error as Error)
       throw new Error('Failed to retrieve system metrics')
     }
   }
 
   async getCpuMetrics(): Promise<CpuMetrics> {
     try {
-      const [load, cpu] = await Promise.all([
-        si.loadavg(),
-        si.currentLoad()
-      ])
+      const cpu = await si.currentLoad()
 
       return {
         usage: Math.round(cpu.currentLoad),
-        cores: cpu.cpus?.map((core, index) => ({
+        cores: cpu.cpus?.map((core: any, index: number) => ({
           core: index,
           usage: Math.round(core.load)
         })) || [],
         temperature: 45, // Will implement Pi-specific temperature reading
         frequency: 1800, // Will read actual CPU frequency
         loadAverage: {
-          '1min': load.avgLoad1,
-          '5min': load.avgLoad5,
-          '15min': load.avgLoad15
+          '1min': cpu.avgLoad || 0,
+          '5min': 0,
+          '15min': 0
         }
       }
     } catch (error) {
-      logger.error('Failed to get CPU metrics:', error)
+      logger.error('Failed to get CPU metrics:', error as Error)
       throw new Error('Failed to retrieve CPU metrics')
     }
   }
@@ -90,7 +86,7 @@ export class SystemService {
         cached: mem.cached
       }
     } catch (error) {
-      logger.error('Failed to get memory metrics:', error)
+      logger.error('Failed to get memory metrics:', error as Error)
       throw new Error('Failed to retrieve memory metrics')
     }
   }

@@ -44,7 +44,7 @@ async function start() {
     logger.info(`🍓 SteffiePI Monitor Server running on ${HOST}:${PORT}`)
     
   } catch (error) {
-    logger.error('Failed to start server:', error)
+    logger.error('Failed to start server:', error as Error)
     process.exit(1)
   }
 }

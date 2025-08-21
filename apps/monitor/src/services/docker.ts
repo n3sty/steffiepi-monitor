@@ -28,7 +28,7 @@ export class DockerService {
         started: container.State === 'running' ? new Date().toISOString() : null
       }))
     } catch (error) {
-      logger.error('Failed to get Docker containers:', error)
+      logger.error('Failed to get Docker containers:', error as Error)
       return []
     }
   }
@@ -45,7 +45,7 @@ export class DockerService {
 
       return {
         id: containerId,
-        name: stats.name?.replace('/', '') || 'unknown',
+        name: (stats as any).name?.replace('/', '') || 'unknown',
         cpu: {
           usage: Math.round(cpuUsage || 0),
           system: Math.round(systemDelta || 0)
@@ -60,12 +60,12 @@ export class DockerService {
           tx: Object.values(stats.networks || {}).reduce((acc: number, net: any) => acc + (net.tx_bytes || 0), 0)
         },
         io: {
-          read: stats.blkio_stats.io_service_bytes_recursive?.find((item: any) => item.op === 'Read')?.value || 0,
-          write: stats.blkio_stats.io_service_bytes_recursive?.find((item: any) => item.op === 'Write')?.value || 0
+          read: stats.blkio_stats?.io_service_bytes_recursive?.find((item: any) => item.op === 'Read')?.value || 0,
+          write: stats.blkio_stats?.io_service_bytes_recursive?.find((item: any) => item.op === 'Write')?.value || 0
         }
       }
     } catch (error) {
-      logger.error(`Failed to get stats for container ${containerId}:`, error)
+      logger.error(`Failed to get stats for container ${containerId}:`, error as Error)
       return null
     }
   }
