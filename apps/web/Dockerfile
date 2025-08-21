@@ -5,6 +5,9 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
+# Update npm to latest version for workspace support
+RUN npm install -g npm@latest
+
 # Copy root package.json for workspace setup
 COPY package*.json ./
 COPY turbo.json ./
@@ -14,7 +17,7 @@ COPY packages/shared/package.json ./packages/shared/package.json
 COPY apps/web/package.json ./apps/web/package.json
 
 # Install dependencies for the workspace
-RUN npm install
+RUN npm install --ignore-scripts
 
 # Rebuild the source code only when needed
 FROM base AS builder
