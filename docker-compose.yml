@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  monitor:
+    build:
+      context: ./apps/monitor
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - HOST=0.0.0.0
+      - LOG_LEVEL=debug
+    volumes:
+      - ./apps/monitor:/app
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - node_modules_monitor:/app/node_modules
+    restart: unless-stopped
+    command: npm run dev
+
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - MONITOR_MODE=real
+      - NEXT_PUBLIC_MONITOR_MODE=real
+      - MONITOR_API_URL=http://monitor:3001
+      - MONITOR_WEBSOCKET_URL=ws://monitor:3001
+    volumes:
+      - ./apps/web:/app
+      - node_modules_web:/app/node_modules
+    depends_on:
+      - monitor
+    restart: unless-stopped
+    command: npm run dev
+
+volumes:
+  node_modules_monitor:
+  node_modules_web:

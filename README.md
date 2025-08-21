@@ -1,290 +1,223 @@
-# SteffiePI Monitor
+# SteffiePI Monitor 🍓
 
-A Next.js dashboard for monitoring Raspberry Pi system metrics and Docker containers, designed to work seamlessly with the [node-monitor](../node-monitor) backend service.
+A complete monorepo solution for monitoring Raspberry Pi system metrics and Docker containers, featuring both a lightweight backend monitor and a modern web dashboard that can run entirely on your Pi.
 
-## Features
+## 🏗️ Architecture
+
+This monorepo contains:
+- **`apps/monitor`** - Fastify-based backend service for Pi monitoring
+- **`apps/web`** - Next.js dashboard for visualization
+- **`packages/shared`** - Shared TypeScript types and utilities
+- **`scripts/`** - Deployment and build automation
+
+## ✨ Features
 
 - **🖥️ System Monitoring**: CPU, memory, disk usage, and network statistics
-- **🐳 Docker Integration**: Container status, resource usage, and logs
-- **⚡ Real-time Updates**: WebSocket streaming and SWR data fetching
-- **🌐 Hybrid Architecture**: Mock data for development, real Pi backend for production
-- **🎨 Modern UI**: Built with Tailwind CSS and Radix UI components
-- **🔧 Debug Panel**: Development tools and API metrics
-- **🔄 Smart Proxy**: Automatic fallback from real to mock data
+- **🐳 Docker Integration**: Container status, resource usage, and management
+- **⚡ Real-time Updates**: WebSocket streaming for live metrics
+- **🎨 Modern Web UI**: Beautiful dashboard built with Next.js and Tailwind CSS
+- **🍓 Pi-Optimized**: Designed to run efficiently on Raspberry Pi hardware
+- **📦 Easy Deployment**: One-command deployment to your Pi
 
-## Architecture Overview
+## 🚀 Quick Start
 
-This project implements a **hybrid proxy pattern** that bridges the gap between development and production:
+### Development Setup
 
-```
-Frontend (Next.js) → API Routes (Proxy) → Pi Backend OR Mock Data
-                                       ↘ WebSocket (real-time)
-```
-
-### Modes
-
-- **Mock Mode** (`MONITOR_MODE=mock`): Uses generated data for development
-- **Real Mode** (`MONITOR_MODE=real`): Connects to actual Raspberry Pi backend
-- **Auto-fallback**: Gracefully falls back to mock data if Pi is unavailable
-
-## Quick Start
-
-### 1. Environment Setup
-
-Copy the environment template and configure:
-
-```bash
-cp .env.example .env.local
-```
-
-Edit `.env.local` based on your setup:
-
-**For Development (Mock Data):**
-```env
-MONITOR_MODE=mock
-NEXT_PUBLIC_MONITOR_MODE=mock
-```
-
-**For Production (Real Pi Backend):**
-```env
-MONITOR_MODE=real
-NEXT_PUBLIC_MONITOR_MODE=real
-MONITOR_API_URL=https://your-pi.local:3001
-MONITOR_API_KEY=your-secure-api-key
-MONITOR_WEBSOCKET_URL=wss://your-pi.local:3001
-```
-
-### 2. Install Dependencies
-
+1. **Install dependencies**
 ```bash
 npm install
 ```
 
-### 3. Start Development
-
+2. **Start development servers**
 ```bash
+# Start both monitor and web in development mode
 npm run dev
+
+# Or start individually
+npm run dev:web      # Web dashboard on :3000
+npm run dev:monitor  # Monitor API on :3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
+### Deploy to Raspberry Pi
 
-### 4. Test Integration
-
-Run the integration test to verify all endpoints work:
-
+1. **One-command deployment**
 ```bash
-# Start the dev server first (npm run dev)
-node test-integration.js
+npm run deploy:pi <pi-host-or-ip>
 ```
 
-## Configuration
+Example:
+```bash
+npm run deploy:pi 192.168.1.100
+npm run deploy:pi raspberry.local pi /opt/steffiepi-monitor
+```
+
+This will:
+- Build all packages
+- Upload to your Pi
+- Install dependencies
+- Configure PM2 for process management
+- Start both monitor and web services
+- Set up auto-start on boot
+
+2. **Access your dashboard**
+- Web Interface: `http://your-pi-ip:3000`
+- API Health: `http://your-pi-ip:3001/api/health`
+
+## 📁 Project Structure
+
+```
+steffiepi-monitor/
+├── apps/
+│   ├── monitor/          # Backend monitoring service
+│   │   ├── src/
+│   │   │   ├── routes/   # API endpoints
+│   │   │   ├── services/ # System & Docker services
+│   │   │   └── utils/    # Logging & utilities
+│   │   └── package.json
+│   └── web/              # Frontend Next.js app
+│       ├── src/
+│       │   ├── app/      # Next.js App Router
+│       │   ├── components/ # React components
+│       │   └── lib/      # Client utilities
+│       └── package.json
+├── packages/
+│   └── shared/           # Shared types & utilities
+│       ├── src/
+│       │   ├── types.ts  # TypeScript interfaces
+│       │   └── utils.ts  # Shared functions
+│       └── package.json
+└── scripts/              # Deployment automation
+    ├── build-all.sh      # Build all packages
+    ├── deploy-to-pi.sh   # Deploy to Pi
+    ├── pi-setup.sh       # Pi environment setup
+    └── start-services.sh # Start services on Pi
+```
+
+## 🛠️ Available Commands
+
+### Root Level
+- `npm run dev` - Start all apps in development
+- `npm run build` - Build all packages
+- `npm run lint` - Lint all packages
+- `npm run clean` - Clean all build outputs
+- `npm run deploy:pi <host>` - Deploy to Raspberry Pi
+- `npm run build:all` - Create deployment archive
+
+### Individual Apps
+- `npm run dev:web` - Start only web dashboard
+- `npm run dev:monitor` - Start only monitor backend
+
+## 🔧 Configuration
 
 ### Environment Variables
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `MONITOR_MODE` | Backend mode: `mock` or `real` | `mock` | No |
-| `NEXT_PUBLIC_MONITOR_MODE` | Client-side mode | `mock` | No |
-| `MONITOR_API_URL` | Pi backend URL | `https://localhost:3001` | If `real` mode |
-| `MONITOR_API_KEY` | Pi backend API key | - | If `real` mode |
-| `MONITOR_WEBSOCKET_URL` | WebSocket URL for real-time data | `wss://localhost:3001` | If `real` mode |
+**Monitor Backend (`apps/monitor/.env`)**:
+```env
+NODE_ENV=production
+PORT=3001
+HOST=0.0.0.0
+LOG_LEVEL=info
+ALLOWED_ORIGINS=http://localhost:3000
+```
 
-#### Logging Configuration
+**Web Frontend (`apps/web/.env.local`)**:
+```env
+MONITOR_MODE=real
+NEXT_PUBLIC_MONITOR_MODE=real
+MONITOR_API_URL=http://localhost:3001
+MONITOR_WEBSOCKET_URL=ws://localhost:3001
+```
 
-| Variable | Description | Default | Options |
-|----------|-------------|---------|---------|
-| `LOG_LEVEL` | Logging level | `warn` | `error`, `warn`, `info`, `debug`, `trace` |
-| `LOG_ENABLED` | Enable/disable logging | `true` in dev | `true`, `false` |
-| `LOG_PREFIX` | Custom log prefix | `🔍` | Any string |
+## 🐳 Docker Support
 
-### Mode Switching
-
-You can switch between mock and real data by changing the `MONITOR_MODE` environment variable:
+For containerized deployment:
 
 ```bash
-# Development with mock data
-MONITOR_MODE=mock npm run dev
+# Development
+docker-compose up -d
 
-# Testing with real Pi backend
-MONITOR_MODE=real npm run dev
+# Production
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-### Logging Control
+## 📊 API Endpoints
 
-The application now uses a centralized logging system that can be controlled via environment variables:
+The monitor backend provides these endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/health` | Service health check |
+| `/api/system/overview` | System metrics overview |
+| `/api/system/cpu` | Detailed CPU metrics |
+| `/api/system/memory` | Memory usage details |
+| `/api/docker/containers` | Docker container list |
+| `/ws/metrics` | WebSocket for real-time updates |
+
+## 🍓 Pi Deployment Details
+
+The deployment process:
+
+1. **Builds** all packages using Turbo
+2. **Creates** deployment archive with optimized builds
+3. **Uploads** to your Pi via SSH
+4. **Installs** Node.js, PM2, and dependencies
+5. **Configures** systemd service for auto-start
+6. **Starts** both monitor and web services
+
+Services run under PM2 process manager:
+- `steffiepi-monitor` - Backend API service
+- `steffiepi-web` - Frontend Next.js app
+
+## 🔍 Monitoring
+
+Once deployed, you can monitor the services:
 
 ```bash
-# Minimal logging (only errors and warnings)
-LOG_LEVEL=warn npm run dev
-
-# Verbose logging for debugging
-LOG_LEVEL=debug npm run dev
-
-# Disable all logging
-LOG_ENABLED=false npm run dev
-
-# Custom log prefix
-LOG_PREFIX=🍓 npm run dev
+# On your Pi
+pm2 status           # Check service status
+pm2 logs             # View logs
+pm2 restart all      # Restart services
+sudo systemctl status steffiepi-monitor  # Check systemd service
 ```
 
-**Log Levels:**
-- `error`: Only error messages
-- `warn`: Errors and warnings (default)
-- `info`: Errors, warnings, and info messages
-- `debug`: All messages including debug info
-- `trace`: All messages including trace info
-
-## Backend Integration
-
-This frontend is designed to work with the [node-monitor](../node-monitor) backend service. The backend should be running on your Raspberry Pi with:
-
-- **API Endpoints**: `/api/system/*`, `/api/docker/*`, `/api/health`
-- **WebSocket**: `/ws/metrics` for real-time data streaming  
-- **Authentication**: Bearer token via `Authorization` header
-- **CORS**: Configured to allow requests from your frontend domain
-
-### Setting Up Pi Backend
-
-1. Deploy node-monitor to your Raspberry Pi
-2. Configure environment variables and API key
-3. Start the service: `pm2 start ecosystem.config.js`
-4. Update your `.env.local` with the Pi's details
-
-## Development
-
-### Project Structure
-
-```
-src/
-├── app/api/               # Next.js API routes (proxy layer)
-├── components/            # React components
-├── lib/
-│   ├── api.ts            # Frontend API client
-│   ├── config.ts         # Environment configuration
-│   ├── pi-client.ts      # Pi backend HTTP client
-│   ├── websocket-client.ts # WebSocket real-time client
-│   └── types.ts          # TypeScript interfaces
-└── ...
-```
-
-### Key Components
-
-- **API Routes**: Smart proxies that switch between mock/real data
-- **Pi Client**: Robust HTTP client with retry logic and error handling
-- **WebSocket Client**: Real-time data streaming with auto-reconnection
-- **Type Safety**: Full TypeScript coverage with shared interfaces
-
-### Adding New Endpoints
-
-1. Add the endpoint to the Pi backend
-2. Update `types.ts` with new interfaces
-3. Add the endpoint to `pi-client.ts`
-4. Create/update the corresponding API route in `app/api/`
-5. Add mock data for development
-
-## API Endpoints
-
-| Endpoint | Description | Mock Data | Real Backend |
-|----------|-------------|-----------|--------------|
-| `/api/health` | Service health check | ✅ | ✅ |
-| `/api/system/overview` | System metrics overview | ✅ | ✅ |
-| `/api/system/cpu` | Detailed CPU metrics | ✅ | ✅ |
-| `/api/system/memory` | Memory usage details | ✅ | ✅ |
-| `/api/docker/containers` | Docker container list | ✅ | ✅ |
-
-### Response Format
-
-All endpoints return a consistent format:
-
-```json
-{
-  "success": true,
-  "data": { /* endpoint-specific data */ },
-  "timestamp": "2024-01-15T10:30:00.000Z"
-}
-```
-
-## Real-time Features
-
-### WebSocket Integration
-
-When in `real` mode, the dashboard connects to the Pi's WebSocket endpoint for live updates:
-
-```typescript
-// Automatic real-time connection
-const wsClient = createWebSocketClient({
-  onMessage: (message) => {
-    // Handle real-time system/docker updates
-  }
-});
-```
-
-### SWR Integration
-
-Data fetching uses SWR for efficient caching and revalidation:
-
-```typescript
-// Automatic polling and caching  
-const { data, error } = useSWR('/api/system/overview', fetcher, {
-  refreshInterval: 5000 // 5-second updates
-});
-```
-
-## Deployment
-
-### Development
-```bash
-npm run dev
-```
-
-### Production
-```bash
-npm run build
-npm run start
-```
-
-### Docker (Optional)
-```bash
-docker build -t steffiepi-monitor .
-docker run -p 3000:3000 --env-file .env.local steffiepi-monitor
-```
-
-## Troubleshooting
+## 🚨 Troubleshooting
 
 ### Common Issues
 
-1. **Pi Connection Failed**: Check `MONITOR_API_URL` and network connectivity
-2. **Authentication Error**: Verify `MONITOR_API_KEY` matches Pi backend
-3. **WebSocket Issues**: Ensure Pi WebSocket service is running on correct port
-4. **CORS Errors**: Configure Pi backend to allow your frontend domain
+1. **Pi Connection Failed**
+   - Ensure SSH is enabled on Pi
+   - Check network connectivity
+   - Verify Pi hostname/IP address
 
-### Debug Tools
+2. **Services Won't Start**
+   - Check PM2 logs: `pm2 logs`
+   - Verify Node.js installation
+   - Check port availability (3000, 3001)
 
-- **Debug Panel**: Available in development mode (bottom of dashboard)
-- **Console Logging**: Detailed API request/response logs in dev mode
-- **Integration Test**: Run `node test-integration.js` to verify all endpoints
+3. **Docker Metrics Missing**
+   - Ensure Docker is installed and running
+   - Pi user needs Docker group membership: `sudo usermod -aG docker pi`
 
-### Environment Issues
+### Manual Deployment
 
-```bash
-# Check configuration
-npm run dev
-# Look for configuration logs in console
+If automated deployment fails:
 
-# Test specific mode
-MONITOR_MODE=real npm run dev
-```
+1. Build locally: `npm run build:all`
+2. Copy `dist/steffiepi-monitor.tar.gz` to Pi
+3. Extract and run setup scripts manually
 
-## Contributing
+## 🤝 Contributing
 
-1. Follow existing patterns for new features
-2. Update both mock and real implementations
-3. Add appropriate TypeScript types
-4. Test with both mock and real modes
-5. Update documentation as needed
+1. Clone and install dependencies: `npm install`
+2. Make changes in appropriate app/package
+3. Test with `npm run dev`
+4. Build with `npm run build`
+5. Test deployment in local environment
+
+## 📄 License
+
+MIT License - see LICENSE file for details
 
 ---
 
-**Related Projects:**
-- [node-monitor](../node-monitor) - Raspberry Pi backend service
-- Built with Next.js 15, TypeScript, Tailwind CSS, and SWR
+**🍓 Built for Raspberry Pi enthusiasts who want beautiful system monitoring!**

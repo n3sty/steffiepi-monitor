@@ -1,10 +1,3 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
   
@@ -31,4 +24,17 @@ export function formatUptime(seconds: number): string {
 
 export function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`
+}
+
+export function createApiResponse<T>(data: T, success: boolean = true): { success: boolean; data?: T; error?: string; timestamp: string } {
+  return {
+    success,
+    data: success ? data : undefined,
+    error: success ? undefined : (data as any)?.message || 'Unknown error',
+    timestamp: new Date().toISOString()
+  }
+}
+
+export function isValidPort(port: number): boolean {
+  return port >= 1 && port <= 65535
 }

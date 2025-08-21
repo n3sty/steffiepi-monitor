@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  monitor:
+    build:
+      context: ./monitor
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
+      - LOG_LEVEL=info
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc:/host/etc:ro
+    restart: unless-stopped
+    privileged: true
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONITOR_MODE=real
+      - NEXT_PUBLIC_MONITOR_MODE=real
+      - MONITOR_API_URL=http://monitor:3001
+      - MONITOR_WEBSOCKET_URL=ws://monitor:3001
+    depends_on:
+      - monitor
+    restart: unless-stopped
+
+volumes:
+  node_modules_monitor:
+  node_modules_web:
