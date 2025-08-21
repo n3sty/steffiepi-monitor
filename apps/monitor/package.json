@@ -18,7 +18,7 @@
     "dockerode": "^4.0.2",
     "pino": "^9.5.0",
     "dotenv": "^16.4.7",
-    "@steffiepi/shared": "file:../../packages/shared"
+    "@steffiepi/shared": "file:../../packages/shared/steffiepi-shared-0.1.0.tgz"
   },
   "devDependencies": {
     "@types/node": "^20",
