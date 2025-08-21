@@ -5,27 +5,34 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
+# Copy root package.json for workspace setup
 COPY package*.json ./
-COPY ../../packages/shared/package.json ./packages/shared/
-COPY ../../packages/shared ./packages/shared
+COPY turbo.json ./
 
-# Install dependencies
-RUN npm ci && npm cache clean --force
+# Copy all package.json files
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY apps/web/package.json ./apps/web/package.json
+
+# Install dependencies for the workspace
+RUN npm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages ./packages
-COPY . .
+COPY --from=deps /app/package*.json ./
+COPY --from=deps /app/turbo.json ./
+
+# Copy source code
+COPY packages/ ./packages/
+COPY apps/web/ ./apps/web/
 
 # Build shared package first
 WORKDIR /app/packages/shared
 RUN npm run build
 
 # Build Next.js app
-WORKDIR /app
+WORKDIR /app/apps/web
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
@@ -39,10 +46,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy built Next.js application
+COPY --from=builder /app/apps/web/public ./public
+
+# Use the standalone output
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
 
 USER nextjs
 
