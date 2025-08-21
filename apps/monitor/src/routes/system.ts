@@ -12,7 +12,7 @@ export async function systemRoutes(fastify: FastifyInstance) {
       const overview = await systemService.getOverview()
       reply.send(createApiResponse(overview))
     } catch (error) {
-      logger.error('Failed to get system overview:', error)
+      logger.error(error, 'Failed to get system overview')
       reply.status(500).send(createApiResponse(
         { message: 'Failed to retrieve system overview' },
         false
@@ -26,7 +26,7 @@ export async function systemRoutes(fastify: FastifyInstance) {
       const cpu = await systemService.getCpuMetrics()
       reply.send(createApiResponse(cpu))
     } catch (error) {
-      logger.error('Failed to get CPU metrics:', error)
+      logger.error(error, 'Failed to get CPU metrics')
       reply.status(500).send(createApiResponse(
         { message: 'Failed to retrieve CPU metrics' },
         false
@@ -40,7 +40,7 @@ export async function systemRoutes(fastify: FastifyInstance) {
       const memory = await systemService.getMemoryMetrics()
       reply.send(createApiResponse(memory))
     } catch (error) {
-      logger.error('Failed to get memory metrics:', error)
+      logger.error(error, 'Failed to get memory metrics')
       reply.status(500).send(createApiResponse(
         { message: 'Failed to retrieve memory metrics' },
         false

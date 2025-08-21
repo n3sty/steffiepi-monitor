@@ -28,7 +28,7 @@ export class DockerService {
         started: container.State === 'running' ? new Date().toISOString() : null
       }))
     } catch (error) {
-      logger.error('Failed to get Docker containers:', error)
+      logger.error(error, 'Failed to get Docker containers')
       return []
     }
   }
@@ -65,7 +65,7 @@ export class DockerService {
         }
       }
     } catch (error) {
-      logger.error(`Failed to get stats for container ${containerId}:`, error)
+      logger.error(error, `Failed to get stats for container ${containerId}`)
       return null
     }
   }

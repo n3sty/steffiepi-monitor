@@ -38,7 +38,7 @@ export class SystemService {
         }
       }
     } catch (error) {
-      logger.error('Failed to get system overview:', error)
+      logger.error(error, 'Failed to get system overview')
       throw new Error('Failed to retrieve system metrics')
     }
   }
@@ -62,7 +62,7 @@ export class SystemService {
         }
       }
     } catch (error) {
-      logger.error('Failed to get CPU metrics:', error)
+      logger.error(error, 'Failed to get CPU metrics')
       throw new Error('Failed to retrieve CPU metrics')
     }
   }
@@ -86,7 +86,7 @@ export class SystemService {
         cached: mem.cached
       }
     } catch (error) {
-      logger.error('Failed to get memory metrics:', error)
+      logger.error(error, 'Failed to get memory metrics')
       throw new Error('Failed to retrieve memory metrics')
     }
   }
