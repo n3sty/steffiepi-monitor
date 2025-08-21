@@ -3,36 +3,31 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
-WORKDIR /app
 
-# Update npm to latest version for workspace support
-RUN npm install -g npm@latest
+# Build shared package first
+WORKDIR /app/packages/shared
+COPY packages/shared/package.json ./
+RUN npm install
+COPY packages/shared/ ./
+RUN npm run build
 
-# Copy root package.json for workspace setup
-COPY package*.json ./
-COPY turbo.json ./
-
-# Copy all package.json files
-COPY packages/shared/package.json ./packages/shared/package.json
-COPY apps/web/package.json ./apps/web/package.json
-
-# Install dependencies for the workspace
-RUN npm install --ignore-scripts
+# Install web dependencies
+WORKDIR /app/apps/web
+COPY apps/web/package.json ./
+# Temporarily remove workspace dependency for Docker build
+RUN sed -i 's/"@steffiepi\/shared": "workspace:\*"/"@steffiepi\/shared": "file:\/app\/packages\/shared"/g' package.json
+RUN npm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package*.json ./
-COPY --from=deps /app/turbo.json ./
 
-# Copy source code
-COPY packages/ ./packages/
+# Copy built shared package
+COPY --from=deps /app/packages/shared ./packages/shared
+
+# Copy web dependencies and source
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY apps/web/ ./apps/web/
-
-# Build shared package first
-WORKDIR /app/packages/shared
-RUN npm run build
 
 # Build Next.js app
 WORKDIR /app/apps/web

@@ -3,36 +3,31 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
-WORKDIR /app
 
-# Update npm to latest version for workspace support
-RUN npm install -g npm@latest
+# Build shared package first
+WORKDIR /app/packages/shared
+COPY packages/shared/package.json ./
+RUN npm install
+COPY packages/shared/ ./
+RUN npm run build
 
-# Copy root package.json for workspace setup
-COPY package*.json ./
-COPY turbo.json ./
-
-# Copy all package.json files
-COPY packages/shared/package.json ./packages/shared/package.json
-COPY apps/monitor/package.json ./apps/monitor/package.json
-
-# Install dependencies for the workspace
-RUN npm install --ignore-scripts
+# Install monitor dependencies
+WORKDIR /app/apps/monitor
+COPY apps/monitor/package.json ./
+# Temporarily remove workspace dependency for Docker build
+RUN sed -i 's/"@steffiepi\/shared": "workspace:\*"/"@steffiepi\/shared": "file:\/app\/packages\/shared"/g' package.json
+RUN npm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package*.json ./
-COPY --from=deps /app/turbo.json ./
 
-# Copy source code
-COPY packages/ ./packages/
+# Copy built shared package
+COPY --from=deps /app/packages/shared ./packages/shared
+
+# Copy monitor dependencies and source
+COPY --from=deps /app/apps/monitor/node_modules ./apps/monitor/node_modules
 COPY apps/monitor/ ./apps/monitor/
-
-# Build shared package first
-WORKDIR /app/packages/shared
-RUN npm run build
 
 # Build monitor app
 WORKDIR /app/apps/monitor
