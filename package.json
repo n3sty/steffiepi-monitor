@@ -12,10 +12,7 @@
     "dev:web": "turbo dev --filter=web",
     "dev:monitor": "turbo dev --filter=monitor",
     "lint": "turbo lint",
-    "clean": "turbo clean",
-    "deploy:pi": "./scripts/deploy-to-pi.sh",
-    "deploy:pi:docker": "./scripts/deploy-docker-pi.sh",
-    "build:all": "./scripts/build-all.sh"
+    "clean": "turbo clean"
   },
   "devDependencies": {
     "turbo": "^2.5.6",

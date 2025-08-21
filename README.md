@@ -40,45 +40,29 @@ npm run dev:monitor  # Monitor API on :3001
 
 ### Deploy to Raspberry Pi
 
-#### Option 1: Docker Deployment (Recommended) 🐳
+For complete Pi setup and management instructions, see **[PI-OPERATIONS.md](./PI-OPERATIONS.md)** 📖
 
+**Quick setup overview:**
+
+1. **Clone on your Pi**
 ```bash
-npm run deploy:pi:docker <pi-host-or-ip>
+git clone <your-repo-url>
+cd steffiepi-monitor
+npm install && npm run build
 ```
 
-Example:
+2. **Start with Docker** (recommended)
 ```bash
-npm run deploy:pi:docker 192.168.1.100
-npm run deploy:pi:docker raspberry.local
+docker-compose -f docker-compose.pi.yml up -d
 ```
 
-This will:
-- Upload project files to your Pi via SSH
-- Install Docker and Docker Compose if needed
-- Build containers directly on the Pi
-- Start services with automatic restart policies
-- Set up resource limits optimized for Pi hardware
-
-#### Option 2: Traditional PM2 Deployment
-
+3. **Or start with PM2**
 ```bash
-npm run deploy:pi <pi-host-or-ip>
+npm install -g pm2
+pm2 start ecosystem.config.js
 ```
 
-Example:
-```bash
-npm run deploy:pi 192.168.1.100
-npm run deploy:pi raspberry.local pi /opt/steffiepi-monitor
-```
-
-This will:
-- Build all packages locally
-- Upload to your Pi
-- Install Node.js, PM2, and dependencies
-- Configure systemd service for auto-start
-- Start services with PM2 process management
-
-#### Access Your Dashboard
+4. **Access your dashboard**
 - Web Interface: `http://your-pi-ip:3000`
 - API Health: `http://your-pi-ip:3001/api/health`
 
@@ -119,9 +103,6 @@ steffiepi-monitor/
 - `npm run build` - Build all packages
 - `npm run lint` - Lint all packages
 - `npm run clean` - Clean all build outputs
-- `npm run deploy:pi:docker <host>` - Deploy with Docker (recommended)
-- `npm run deploy:pi <host>` - Deploy with PM2
-- `npm run build:all` - Create deployment archive
 
 ### Individual Apps
 - `npm run dev:web` - Start only web dashboard
@@ -195,58 +176,16 @@ The monitor backend provides these endpoints:
 | `/api/docker/containers` | Docker container list |
 | `/ws/metrics` | WebSocket for real-time updates |
 
-## 🍓 Pi Deployment Details
+## 🍓 Pi Operations
 
-The deployment process:
+For complete Pi deployment, management, and troubleshooting instructions, see **[PI-OPERATIONS.md](./PI-OPERATIONS.md)**
 
-1. **Builds** all packages using Turbo
-2. **Creates** deployment archive with optimized builds
-3. **Uploads** to your Pi via SSH
-4. **Installs** Node.js, PM2, and dependencies
-5. **Configures** systemd service for auto-start
-6. **Starts** both monitor and web services
-
-Services run under PM2 process manager:
-- `steffiepi-monitor` - Backend API service
-- `steffiepi-web` - Frontend Next.js app
-
-## 🔍 Monitoring
-
-Once deployed, you can monitor the services:
-
-```bash
-# On your Pi
-pm2 status           # Check service status
-pm2 logs             # View logs
-pm2 restart all      # Restart services
-sudo systemctl status steffiepi-monitor  # Check systemd service
-```
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **Pi Connection Failed**
-   - Ensure SSH is enabled on Pi
-   - Check network connectivity
-   - Verify Pi hostname/IP address
-
-2. **Services Won't Start**
-   - Check PM2 logs: `pm2 logs`
-   - Verify Node.js installation
-   - Check port availability (3000, 3001)
-
-3. **Docker Metrics Missing**
-   - Ensure Docker is installed and running
-   - Pi user needs Docker group membership: `sudo usermod -aG docker pi`
-
-### Manual Deployment
-
-If automated deployment fails:
-
-1. Build locally: `npm run build:all`
-2. Copy `dist/steffiepi-monitor.tar.gz` to Pi
-3. Extract and run setup scripts manually
+This includes:
+- 🚀 Initial setup and deployment options (Docker & PM2)
+- 🔄 Updating after git commits  
+- 📊 Monitoring and log management
+- 🐛 Troubleshooting common issues
+- ⚙️ Configuration and environment setup
 
 ## 🤝 Contributing
 
