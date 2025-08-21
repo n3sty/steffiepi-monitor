@@ -14,7 +14,7 @@ COPY packages/shared/package.json ./packages/shared/package.json
 COPY apps/monitor/package.json ./apps/monitor/package.json
 
 # Install dependencies for the workspace
-RUN bun install
+RUN npm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -29,11 +29,11 @@ COPY apps/monitor/ ./apps/monitor/
 
 # Build shared package first
 WORKDIR /app/packages/shared
-RUN bun build
+RUN npm run build
 
 # Build monitor app
 WORKDIR /app/apps/monitor
-RUN bun build
+RUN npm run build
 
 # Production image
 FROM base AS runner
@@ -54,7 +54,7 @@ COPY --from=builder --chown=monitor:nodejs /app/packages/shared/dist ./node_modu
 COPY --from=builder --chown=monitor:nodejs /app/packages/shared/package.json ./node_modules/@steffiepi/shared/package.json
 
 # Install only production dependencies
-RUN bun ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 USER monitor
 
