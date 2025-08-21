@@ -40,7 +40,7 @@ export async function websocketRoutes(fastify: FastifyInstance) {
 
         connection.socket.send(JSON.stringify(message))
       } catch (error) {
-        logger.error('Error sending WebSocket metrics update:', error as Error)
+        logger.error('Error sending WebSocket metrics update:', error)
         
         const errorMessage: WebSocketMessage = {
           type: 'error',

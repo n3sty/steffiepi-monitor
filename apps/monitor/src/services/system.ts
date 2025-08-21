@@ -17,7 +17,7 @@ export class SystemService {
 
       return {
         hostname: osInfo.hostname,
-        uptime: osInfo.uptime,
+        uptime: Math.floor(process.uptime()),
         loadAverage: [cpu.avgLoad || 0, 0, 0],
         cpu: {
           usage: Math.round(cpu.currentLoad),
@@ -38,7 +38,7 @@ export class SystemService {
         }
       }
     } catch (error) {
-      logger.error('Failed to get system overview:', error as Error)
+      logger.error('Failed to get system overview:', error)
       throw new Error('Failed to retrieve system metrics')
     }
   }
@@ -62,7 +62,7 @@ export class SystemService {
         }
       }
     } catch (error) {
-      logger.error('Failed to get CPU metrics:', error as Error)
+      logger.error('Failed to get CPU metrics:', error)
       throw new Error('Failed to retrieve CPU metrics')
     }
   }
@@ -86,7 +86,7 @@ export class SystemService {
         cached: mem.cached
       }
     } catch (error) {
-      logger.error('Failed to get memory metrics:', error as Error)
+      logger.error('Failed to get memory metrics:', error)
       throw new Error('Failed to retrieve memory metrics')
     }
   }

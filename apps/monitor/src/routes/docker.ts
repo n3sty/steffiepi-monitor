@@ -12,7 +12,7 @@ export async function dockerRoutes(fastify: FastifyInstance) {
       const containers = await dockerService.getContainers()
       reply.send(createApiResponse(containers))
     } catch (error) {
-      logger.error('Failed to get Docker containers:', error as Error)
+      logger.error('Failed to get Docker containers:', error)
       reply.status(500).send(createApiResponse(
         { message: 'Failed to retrieve Docker containers' },
         false
@@ -36,7 +36,7 @@ export async function dockerRoutes(fastify: FastifyInstance) {
       
       reply.send(createApiResponse(stats))
     } catch (error) {
-      logger.error(`Failed to get stats for container ${id}:`, error as Error)
+      logger.error(`Failed to get stats for container ${id}:`, error)
       reply.status(500).send(createApiResponse(
         { message: 'Failed to retrieve container stats' },
         false
