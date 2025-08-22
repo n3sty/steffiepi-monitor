@@ -14,9 +14,12 @@ RUN npm run build
 # Install monitor dependencies
 WORKDIR /app/apps/monitor
 COPY apps/monitor/package.json ./
-# Temporarily remove workspace dependency for Docker build
-RUN sed -i 's/"@steffiepi\/shared": "file:.*"/"@steffiepi\/shared": "file:\/app\/packages\/shared"/g' package.json
-RUN npm install
+# Create node_modules/@steffiepi directory and link shared package
+RUN mkdir -p node_modules/@steffiepi
+RUN npm install --ignore-scripts
+# Remove the failed shared install and link manually
+RUN rm -rf node_modules/@steffiepi/shared
+RUN ln -s /app/packages/shared node_modules/@steffiepi/shared
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -52,7 +55,7 @@ COPY --from=builder --chown=monitor:nodejs /app/packages/shared/dist ./node_modu
 COPY --from=builder --chown=monitor:nodejs /app/packages/shared/package.json ./node_modules/@steffiepi/shared/package.json
 
 # Install only production dependencies
-RUN npm install --omit=dev && npm cache clean --force
+RUN npm install --omit=dev
 
 USER monitor
 
